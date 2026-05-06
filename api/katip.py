@@ -13,11 +13,10 @@ class handler(BaseHTTPRequestHandler):
             user_text = body.get('text', '')
             api_key = os.environ.get('GEMINI_API_KEY', '').strip()
 
-            # Listede teyit ettiğimiz en güçlü model
-            model_name = "gemini-3.1-pro-preview" 
+            # Kotası daha yüksek ve çok daha hızlı olan Flash modelini seçiyoruz
+            model_name = "gemini-3-flash-preview" 
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
             
-            # Asistanın kişiliğini ve görevini belirliyoruz
             sistem_talimati = (
                 "Sen profesyonel bir adliye katibi asistanısın. Görevin; verilen metinlerden "
                 "TC kimlik no, isim, dosya numarası ayıklamak, hukuki metinleri özetlemek "
