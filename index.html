@@ -3,221 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini | Sanal Katip</title>
+    <title>Gemini | Düşünen Asistan</title>
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #131314;
-            --sidebar-color: #1e1f20;
-            --text-color: #e3e3e3;
-            --input-bg: #1e1f20;
-            --accent-color: #4285f4;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Google Sans', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Sol Menü */
-        .sidebar {
-            width: 260px;
-            background-color: var(--sidebar-color);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .sidebar-item {
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.2s;
+        :root { --bg: #131314; --side: #1e1f20; --text: #e3e3e3; --accent: #4285f4; }
+        body { margin: 0; font-family: 'Google Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; }
+        
+        .sidebar { width: 260px; background: var(--side); padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; position: relative; }
+        
+        #chatArea { width: 100%; max-width: 800px; flex: 1; overflow-y: auto; margin-bottom: 20px; }
+        
+        /* Düşünme Kutusu Stili */
+        .thought-bubble {
+            background: #1a1a1c;
+            border-left: 3px solid #888;
+            padding: 15px;
+            margin: 10px 0;
             font-size: 14px;
+            color: #aaa;
+            border-radius: 4px;
         }
+        .thought-header { font-weight: bold; font-size: 12px; margin-bottom: 5px; color: #4285f4; text-transform: uppercase; }
 
-        .sidebar-item:hover { background: #333537; }
-
-        /* Ana İçerik */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            position: relative;
-        }
-
-        .greeting {
-            font-size: 40px;
-            margin-bottom: 40px;
-            background: linear-gradient(to right, #4285f4, #9b72cb, #d96570);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 500;
-        }
-
-        /* Sonuç Kutusu (Chat Akışı gibi) */
-        #resultBox {
-            width: 100%;
-            max-width: 800px;
-            max-height: 400px;
-            overflow-y: auto;
-            margin-bottom: 20px;
-            font-size: 16px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            padding: 0 20px;
-        }
-
-        /* Giriş Alanı (Gemini Bar) */
-        .input-container {
-            width: 100%;
-            max-width: 800px;
-            background-color: var(--input-bg);
-            border-radius: 28px;
-            padding: 10px 20px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-
-        textarea {
-            background: transparent;
-            border: none;
-            color: var(--text-color);
-            font-size: 16px;
-            font-family: inherit;
-            resize: none;
-            padding: 10px 0;
-            outline: none;
-            min-height: 60px;
-        }
-
-        .input-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 5px;
-        }
-
-        .tools { display: flex; gap: 15px; color: #aaa; cursor: pointer; }
-
-        #processBtn {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        #processBtn:disabled { opacity: 0.5; }
-
-        /* Chips / Hızlı Aksiyonlar */
-        .chips {
-            display: flex;
-            gap: 10px;
-            margin-top: 30px;
-        }
-
-        .chip {
-            background: #1e1f20;
-            border: 1px solid #333;
-            padding: 8px 16px;
-            border-radius: 10px;
-            font-size: 13px;
-            cursor: pointer;
-        }
+        .input-box { width: 100%; max-width: 800px; background: var(--side); border-radius: 28px; padding: 15px 25px; display: flex; align-items: center; gap: 15px; }
+        textarea { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 16px; resize: none; }
+        button { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
+        
+        .greeting { font-size: 44px; font-weight: 500; margin-top: 10vh; background: linear-gradient(to right, #4285f4, #d96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
 <body>
-
     <div class="sidebar">
-        <div style="font-weight: 500; margin-bottom: 20px;">Gemini <span style="color: #888; font-size: 12px;">PRO</span></div>
-        <div class="sidebar-item">➕ Yeni sohbet</div>
-        <div class="sidebar-item">📋 Tutanak Şablonları</div>
-        <div class="sidebar-item">⚖️ Hukuki Özetleme</div>
-        <div class="sidebar-item">💻 Kodlama Desteği</div>
+        <div style="font-weight: 500; font-size: 20px;">Gemini <span style="font-size: 12px; color:var(--accent)">DÜŞÜNEN</span></div>
+        <div style="margin-top:20px; font-size:13px; color:#888;">Gecikmiş adalet adalet değildir.</div>
     </div>
-
-    <div class="main-content">
-        <div id="welcomeScreen">
-            <div class="greeting">Merhaba Emirhan</div>
-        </div>
-
-        <div id="resultBox"></div>
-
-        <div class="input-container">
-            <textarea id="inputText" placeholder="Sanal Katip'e bir şeyler sorun veya bir metin yapıştırın..."></textarea>
-            <div class="input-footer">
-                <div class="tools">
-                    <span>🖼️ Resim</span>
-                    <span>🎙️ Ses</span>
-                    <span>⚙️ Araçlar</span>
-                </div>
-                <button id="processBtn" onclick="islemYap()">Gönder</button>
-            </div>
-        </div>
-
-        <div class="chips" id="quickChips">
-            <div class="chip">⚖️ Karar Özeti Çıkar</div>
-            <div class="chip">📝 Tensip Hazırla</div>
-            <div class="chip">🐍 Python Yardımı</div>
+    <div class="main">
+        <div id="welcome" class="greeting">Merhaba Emirhan</div>
+        <div id="chatArea"></div>
+        <div class="input-box">
+            <textarea id="inp" placeholder="Düşünmesini istediğiniz bir konu yazın..." rows="1"></textarea>
+            <button id="btn" onclick="ask()">Gönder</button>
         </div>
     </div>
 
     <script>
-        async function islemYap() {
-            const inputText = document.getElementById('inputText').value;
-            const resultBox = document.getElementById('resultBox');
-            const welcomeScreen = document.getElementById('welcomeScreen');
-            const quickChips = document.getElementById('quickChips');
-            const processBtn = document.getElementById('processBtn');
+        async function ask() {
+            const inp = document.getElementById('inp');
+            const chat = document.getElementById('chatArea');
+            const welcome = document.getElementById('welcome');
+            if(!inp.value.trim()) return;
 
-            if(!inputText.trim()) return;
-
-            // İlk kullanımda karşılama ekranını kaldır
-            welcomeScreen.style.display = 'none';
-            quickChips.style.display = 'none';
-            
-            processBtn.disabled = true;
-            resultBox.innerHTML += `<div style="color: #aaa; margin-top: 10px;">Siz: ${inputText}</div>`;
-            resultBox.innerHTML += `<div id="loading" style="color: #4285f4; margin-top: 10px;">Düşünüyor...</div>`;
-            
-            document.getElementById('inputText').value = '';
+            welcome.style.display = 'none';
+            const userMsg = inp.value;
+            chat.innerHTML += `<div style="margin:20px 0; font-weight:500;">Siz: ${userMsg}</div>`;
+            const loadingId = "L" + Date.now();
+            chat.innerHTML += `<div id="${loadingId}" style="color:#4285f4;">Muhakeme ediliyor...</div>`;
+            inp.value = '';
 
             try {
-                const response = await fetch('/api/katip', {
+                const res = await fetch('/api/katip', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: inputText })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: userMsg})
                 });
+                const data = await res.json();
+                document.getElementById(loadingId).remove();
 
-                const data = await response.json();
-                document.getElementById('loading').remove();
-                
-                if(response.ok) {
-                    resultBox.innerHTML += `<div style="margin-top: 15px; border-left: 2px solid #4285f4; padding-left: 15px;">${data.result}</div>`;
-                } else {
-                    resultBox.innerHTML += `<div style="color: red;">Hata: ${data.error}</div>`;
+                // Düşünce ve Cevabı Ayıkla
+                const raw = data.result;
+                let thought = "";
+                let answer = raw;
+
+                if(raw.includes("[CEVAP]")) {
+                    thought = raw.split("[CEVAP]")[0].replace("[DÜŞÜNCE]", "").trim();
+                    answer = raw.split("[CEVAP]")[1].trim();
                 }
-            } catch (error) {
-                resultBox.innerHTML += `<div style="color: red;">Hata: ${error.message}</div>`;
-            } finally {
-                processBtn.disabled = false;
-                resultBox.scrollTop = resultBox.scrollHeight;
+
+                if(thought) {
+                    chat.innerHTML += `<div class="thought-bubble"><div class="thought-header">Düşünce Süreci</div>${thought}</div>`;
+                }
+                chat.innerHTML += `<div style="margin-top:15px; line-height:1.6;">${answer}</div><hr style="border:0; border-top:1px solid #333; margin:20px 0;">`;
+
+            } catch (e) {
+                document.getElementById(loadingId).innerHTML = "Hata oluştu.";
             }
+            chat.scrollTop = chat.scrollHeight;
         }
     </script>
 </body>
