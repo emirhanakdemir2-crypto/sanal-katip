@@ -3,51 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sanal Katip</title>
+    <title>Gemini | Sanal Katip</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
-        h2 { color: #2c3e50; text-align: center; margin-top: 0; }
-        textarea { width: 100%; padding: 15px; margin-top: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; resize: vertical; font-family: inherit; font-size: 14px; }
-        button { width: 100%; padding: 15px; background-color: #2980b9; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: background 0.3s; }
-        button:hover { background-color: #3498db; }
-        button:disabled { background-color: #95a5a6; cursor: not-allowed; }
-        .result-box { margin-top: 20px; padding: 15px; background-color: #ecf0f1; border-radius: 5px; min-height: 100px; white-space: pre-wrap; border: 1px solid #bdc3c7; font-size: 15px; line-height: 1.5; }
-        .loader { display: none; text-align: center; margin-top: 15px; font-style: italic; color: #7f8c8d; }
+        :root {
+            --bg-color: #131314;
+            --sidebar-color: #1e1f20;
+            --text-color: #e3e3e3;
+            --input-bg: #1e1f20;
+            --accent-color: #4285f4;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Google Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sol Menü */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sidebar-item {
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar-item:hover { background: #333537; }
+
+        /* Ana İçerik */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .greeting {
+            font-size: 40px;
+            margin-bottom: 40px;
+            background: linear-gradient(to right, #4285f4, #9b72cb, #d96570);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 500;
+        }
+
+        /* Sonuç Kutusu (Chat Akışı gibi) */
+        #resultBox {
+            width: 100%;
+            max-width: 800px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            font-size: 16px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            padding: 0 20px;
+        }
+
+        /* Giriş Alanı (Gemini Bar) */
+        .input-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--input-bg);
+            border-radius: 28px;
+            padding: 10px 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        textarea {
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            font-size: 16px;
+            font-family: inherit;
+            resize: none;
+            padding: 10px 0;
+            outline: none;
+            min-height: 60px;
+        }
+
+        .input-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+        .tools { display: flex; gap: 15px; color: #aaa; cursor: pointer; }
+
+        #processBtn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        #processBtn:disabled { opacity: 0.5; }
+
+        /* Chips / Hızlı Aksiyonlar */
+        .chips {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .chip {
+            background: #1e1f20;
+            border: 1px solid #333;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Yardımcı</h2>
-        <p>Taleplerinizi iletin:</p>
-        
-        <textarea id="inputText" rows="6" placeholder="Örn: Bu dava dilekçesindeki TC kimlik numarasını ve davacı adını ayıkla..."></textarea>
-        
-        <button id="processBtn" onclick="islemYap()">Metni İşle</button>
-        <div id="loader" class="loader">Yapay zeka metni inceliyor, lütfen bekleyin... ⏳</div>
-        
-        <div id="resultBox" class="result-box">Sonuç burada görünecek...</div>
+
+    <div class="sidebar">
+        <div style="font-weight: 500; margin-bottom: 20px;">Gemini <span style="color: #888; font-size: 12px;">PRO</span></div>
+        <div class="sidebar-item">➕ Yeni sohbet</div>
+        <div class="sidebar-item">📋 Tutanak Şablonları</div>
+        <div class="sidebar-item">⚖️ Hukuki Özetleme</div>
+        <div class="sidebar-item">💻 Kodlama Desteği</div>
+    </div>
+
+    <div class="main-content">
+        <div id="welcomeScreen">
+            <div class="greeting">Merhaba Emirhan</div>
+        </div>
+
+        <div id="resultBox"></div>
+
+        <div class="input-container">
+            <textarea id="inputText" placeholder="Sanal Katip'e bir şeyler sorun veya bir metin yapıştırın..."></textarea>
+            <div class="input-footer">
+                <div class="tools">
+                    <span>🖼️ Resim</span>
+                    <span>🎙️ Ses</span>
+                    <span>⚙️ Araçlar</span>
+                </div>
+                <button id="processBtn" onclick="islemYap()">Gönder</button>
+            </div>
+        </div>
+
+        <div class="chips" id="quickChips">
+            <div class="chip">⚖️ Karar Özeti Çıkar</div>
+            <div class="chip">📝 Tensip Hazırla</div>
+            <div class="chip">🐍 Python Yardımı</div>
+        </div>
     </div>
 
     <script>
         async function islemYap() {
             const inputText = document.getElementById('inputText').value;
             const resultBox = document.getElementById('resultBox');
-            const loader = document.getElementById('loader');
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            const quickChips = document.getElementById('quickChips');
             const processBtn = document.getElementById('processBtn');
 
-            if(!inputText.trim()) {
-                alert("Lütfen önce bir metin girin!");
-                return;
-            }
+            if(!inputText.trim()) return;
 
-            // Butonu kilitle ve yükleniyor yazısını göster
+            // İlk kullanımda karşılama ekranını kaldır
+            welcomeScreen.style.display = 'none';
+            quickChips.style.display = 'none';
+            
             processBtn.disabled = true;
-            loader.style.display = 'block';
-            resultBox.innerText = '';
+            resultBox.innerHTML += `<div style="color: #aaa; margin-top: 10px;">Siz: ${inputText}</div>`;
+            resultBox.innerHTML += `<div id="loading" style="color: #4285f4; margin-top: 10px;">Düşünüyor...</div>`;
+            
+            document.getElementById('inputText').value = '';
 
             try {
-                // Arka plandaki yapay zeka beynine veriyi yolluyoruz
                 const response = await fetch('/api/katip', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -55,18 +205,18 @@
                 });
 
                 const data = await response.json();
+                document.getElementById('loading').remove();
                 
                 if(response.ok) {
-                    resultBox.innerText = data.result;
+                    resultBox.innerHTML += `<div style="margin-top: 15px; border-left: 2px solid #4285f4; padding-left: 15px;">${data.result}</div>`;
                 } else {
-                    resultBox.innerText = "Bir hata oluştu: " + (data.error || "Bilinmeyen hata");
+                    resultBox.innerHTML += `<div style="color: red;">Hata: ${data.error}</div>`;
                 }
             } catch (error) {
-                resultBox.innerText = "Sunucuya bağlanılamadı. Hata: " + error.message;
+                resultBox.innerHTML += `<div style="color: red;">Hata: ${error.message}</div>`;
             } finally {
-                // İşlem bitince ekranı normale döndür
                 processBtn.disabled = false;
-                loader.style.display = 'none';
+                resultBox.scrollTop = resultBox.scrollHeight;
             }
         }
     </script>
