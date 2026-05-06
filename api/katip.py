@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler
 import json
 import os
 import urllib.request
+import urllib.error
 
 class handler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -12,34 +13,52 @@ class handler(BaseHTTPRequestHandler):
             user_text = body.get('text', '')
             api_key = os.environ.get('GEMINI_API_KEY', '').strip()
 
-            # "Düşünen" zeka için 3.1 Pro veya Flash modelini kullanıyoruz
+            # Senin listendeki en yeni ve stabil Gemini 3.1 sürümü
             model_name = "gemini-3.1-flash-lite-preview" 
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
             
-            # MUHAKEME TALİMATI: Yapay zekayı 'düşünmeye' zorluyoruz
+            # Halüsinasyon önleyici, derin düşünme ve internet arama talimatı
             sistem_talimati = (
-                "Sen derin düşünme yeteneğine sahip bir asistansın. Cevap vermeden önce "
-                "metni hukuki, teknik ve mantıksal açılardan analiz et. Yanıtını şu formatta ver:\n"
-                "[DÜŞÜNCE]\n(Buraya yaptığın analizi ve izlediğin adımları yaz)\n"
-                "[CEVAP]\n(Buraya kullanıcıya vereceğin asıl yanıtı yaz)"
+                "Sen Gemini 3.1 mimarisi üzerine kurulu, derin muhakeme yeteneği olan "
+                "kıdemli bir hukuk asistanısın. Yargıtay kararları veya mevzuat sorulduğunda "
+                "uydurma bilgi vermemek için mutlaka Google Arama motorunu kullan. "
+                "Cevaplarını şu formatta sun:\n"
+                "[DÜŞÜNCE]\n(Arama ve analiz süreci)\n"
+                "[CEVAP]\n(Gerçek verilere dayalı yanıt)"
             )
             
             payload = {
-                "contents": [{"parts": [{"text": f"{sistem_talimati}\n\nKullanıcı: {user_text}"}]}]
+                "contents": [{"parts": [{"text": f"{sistem_talimati}\n\nKullanıcı: {user_text}"}]}],
+                "tools": [{"google_search_retrieval": {}}] 
             }
             
-            req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers={'Content-Type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=30) as response:
+            req = urllib.request.Request(
+                url, 
+                data=json.dumps(payload).encode('utf-8'), 
+                headers={'Content-Type': 'application/json'}
+            )
+
+            with urllib.request.urlopen(req, timeout=45) as response:
                 res_body = response.read()
                 gemini_json = json.loads(res_body.decode('utf-8'))
-                ai_cevabi = gemini_json['candidates'][0]['content']['parts'][0]['text']
+                
+                # Gemini 3 serisinde yanıt yapısı bazen farklılık gösterebilir, garantili çekiyoruz
+                if 'candidates' in gemini_json and len(gemini_json['candidates']) > 0:
+                    candidate = gemini_json['candidates'][0]
+                    if 'content' in candidate and 'parts' in candidate['content']:
+                        ai_cevabi = candidate['content']['parts'][0]['text']
+                    else:
+                        ai_cevabi = "[CEVAP] Model cevap üretti ancak beklenen formatta değil."
+                else:
+                    ai_cevabi = "[CEVAP] Google şu an bu sorguya yanıt veremedi."
             
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps({"result": ai_cevabi}).encode('utf-8'))
+
         except Exception as e:
             self.send_response(500)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
+            self.wfile.write(json.dumps({"error": f"Gemini 3 Bağlantı Hatası: {str(e)}"}).encode('utf-8'))
