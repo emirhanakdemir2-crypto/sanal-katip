@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanal Katip</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        h2 { color: #2c3e50; text-align: center; margin-top: 0; }
+        textarea { width: 100%; padding: 15px; margin-top: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; resize: vertical; font-family: inherit; font-size: 14px; }
+        button { width: 100%; padding: 15px; background-color: #2980b9; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: background 0.3s; }
+        button:hover { background-color: #3498db; }
+        button:disabled { background-color: #95a5a6; cursor: not-allowed; }
+        .result-box { margin-top: 20px; padding: 15px; background-color: #ecf0f1; border-radius: 5px; min-height: 100px; white-space: pre-wrap; border: 1px solid #bdc3c7; font-size: 15px; line-height: 1.5; }
+        .loader { display: none; text-align: center; margin-top: 15px; font-style: italic; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>⚖️ Sanal Katip Asistanı</h2>
+        <p>UYAP'tan aldığınız metni veya talebinizi aşağıya yapıştırın:</p>
+        
+        <textarea id="inputText" rows="6" placeholder="Örn: Bu dava dilekçesindeki TC kimlik numarasını ve davacı adını ayıkla..."></textarea>
+        
+        <button id="processBtn" onclick="islemYap()">Metni İşle</button>
+        <div id="loader" class="loader">Yapay zeka metni inceliyor, lütfen bekleyin... ⏳</div>
+        
+        <div id="resultBox" class="result-box">Sonuç burada görünecek...</div>
+    </div>
+
+    <script>
+        async function islemYap() {
+            const inputText = document.getElementById('inputText').value;
+            const resultBox = document.getElementById('resultBox');
+            const loader = document.getElementById('loader');
+            const processBtn = document.getElementById('processBtn');
+
+            if(!inputText.trim()) {
+                alert("Lütfen önce bir metin girin!");
+                return;
+            }
+
+            // Butonu kilitle ve yükleniyor yazısını göster
+            processBtn.disabled = true;
+            loader.style.display = 'block';
+            resultBox.innerText = '';
+
+            try {
+                // Arka plandaki yapay zeka beynine veriyi yolluyoruz
+                const response = await fetch('/api/katip', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: inputText })
+                });
+
+                const data = await response.json();
+                
+                if(response.ok) {
+                    resultBox.innerText = data.result;
+                } else {
+                    resultBox.innerText = "Bir hata oluştu: " + (data.error || "Bilinmeyen hata");
+                }
+            } catch (error) {
+                resultBox.innerText = "Sunucuya bağlanılamadı. Hata: " + error.message;
+            } finally {
+                // İşlem bitince ekranı normale döndür
+                processBtn.disabled = false;
+                loader.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
