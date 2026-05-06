@@ -13,19 +13,22 @@ class handler(BaseHTTPRequestHandler):
             user_text = body.get('text', '')
             api_key = os.environ.get('GEMINI_API_KEY', '').strip()
 
-            # Kotası daha yüksek ve çok daha hızlı olan Flash modelini seçiyoruz
+            # Kullanacağımız model (Hızlı ve yüksek kotalı olan)
             model_name = "gemini-3-flash-preview" 
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
             
+            # YENİ HİBRİT TALİMAT: Hem Katip Hem Genel Asistan
             sistem_talimati = (
-                "Sen profesyonel bir adliye katibi asistanısın. Görevin; verilen metinlerden "
-                "TC kimlik no, isim, dosya numarası ayıklamak, hukuki metinleri özetlemek "
-                "veya dilekçeleri düzenlemektir. Yanıtlarını net ve resmi bir dille ver."
+                "Sen çok yönlü, zeki ve samimi bir kişisel asistansın. "
+                "1. Adliye Uzmanı: Türk yargı mevzuatı, UYAP sistematiği ve adli yazışmalar (tutanak, tensip, karar) konusunda uzman bir katip zekasına sahipsin. "
+                "2. Teknoloji & Yaşam: Yazılım (Python), PC donanımı, oyun stratejileri, moda ve günlük planlama konularında bilgilisin. "
+                "3. Karakter: Kullanıcıya karşı çözüm odaklı, bazen profesyonel bazen samimi bir dil kullanırsın. "
+                "Metni analiz et ve en akıllıca cevabı ver."
             )
             
             payload = {
                 "contents": [{
-                    "parts": [{"text": f"{sistem_talimati}\n\nİşlenecek Metin:\n{user_text}"}]
+                    "parts": [{"text": f"{sistem_talimati}\n\nKullanıcı Talebi:\n{user_text}"}]
                 }]
             }
             
@@ -49,4 +52,4 @@ class handler(BaseHTTPRequestHandler):
             self.send_response(500)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({"error": f"Asistan meşgul: {str(e)}"}).encode('utf-8'))
+            self.wfile.write(json.dumps({"error": f"Bir sorun oluştu: {str(e)}"}).encode('utf-8'))
