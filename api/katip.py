@@ -14,19 +14,12 @@ class handler(BaseHTTPRequestHandler):
 
             api_key = os.environ.get('GEMINI_API_KEY', '').strip()
             
-            if not api_key:
-                self.send_response(500)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "Sistem Hatası: GEMINI_API_KEY bulunamadı."}).encode('utf-8'))
-                return
-
-            # Kararlı v1 sürümünü ve en standart gemini-1.5-flash modelini kullanıyoruz
-            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
+            # Google'ın istediği gibi v1beta ve gemini-1.5-flash-latest kombinasyonuna geçiyoruz
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={api_key}"
             
             payload = {
                 "contents": [{
-                    "parts": [{"text": user_text}]
+                    "parts": [{"text": f"Bir adliye katibi asistanı olarak şu metni profesyonelce düzenle veya istenen işlemi yap:\n\n{user_text}"}]
                 }]
             }
             
@@ -37,7 +30,7 @@ class handler(BaseHTTPRequestHandler):
             )
             
             try:
-                with urllib.request.urlopen(req, timeout=15) as response:
+                with urllib.request.urlopen(req, timeout=20) as response:
                     res_body = response.read()
                     gemini_json = json.loads(res_body.decode('utf-8'))
                     ai_cevabi = gemini_json['candidates'][0]['content']['parts'][0]['text']
@@ -48,14 +41,11 @@ class handler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"result": ai_cevabi}).encode('utf-8'))
                 
             except urllib.error.HTTPError as he:
-                # Burası sihirli kısım: Google'ın gönderdiği gerçek hata mesajını okuyoruz!
                 error_details = he.read().decode('utf-8')
                 self.send_response(500)
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
-                self.wfile.write(json.dumps({
-                    "error": f"Google API Hatası (HTTP {he.code}): {error_details}"
-                }).encode('utf-8'))
+                self.wfile.write(json.dumps({"error": f"Google API Hatası: {error_details}"}).encode('utf-8'))
                 
         except Exception as e:
             self.send_response(500)
